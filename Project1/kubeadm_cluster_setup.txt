@@ -1,0 +1,139 @@
+Reference:
+          https://v1-31.docs.kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
+          https://v1-31.docs.kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/  
+          https://kubernetes.io/docs/concepts/cluster-administration/addons/
+About this: This project outlines steps involve setting up Kubernetes cluster on ubuntu based EC2 instances using kubeadm. 
+Steps: 
+
+1.Launch ec2 with ubuntu image 2 gb ram and 2vcpu 
+ sudo hostnamectl hostname master
+
+2.Launch ec2 with ubuntu image 2 gb ram and 1vcpu 
+  sudo hostnamectl hostname worker
+
+Below commands run on both machine
+
+3.sudo su -
+4.apt update
+---------------------------------------------------Network setting prerequisite ---------------------------------------------------------
+
+Network setting required for network add ons like flannel: run
+
+5.modprobe br_netfilter
+6. Run: ls /proc/sys/net/bridge  [Verify bridge-nf-call-iptables should be there in list]
+7. sudo tee /etc/modules-load.d/k8s.conf <<EOF
+br_netfilter
+EOF
+8. sudo tee /etc/sysctl.d/k8s.conf <<EOF
+net.bridge.bridge-nf-call-iptables  = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv4.ip_forward                 = 1
+EOF
+
+9.# Apply changes
+sudo sysctl --system
+--------------------------------------------------------cgroup driver settings:--------------------------------------------------------------
+ 
+cgroup drivers: control groups are used to constrain resources that are allocated to processes.
+
+There are 2 cgroup drivers 
+cgroupfs 
+system 
+
+and both "container runtime" and kubelet actually talks to cgroup drivers for resource allocation for pods and containers and both are required to use same driver.
+
+Incase systemd is used as init  system use systemd as cgroup driver to avoid conflicts. 
+
+to check what is being used as init system run 
+ps -p 1 
+
+newer versions of Kubernetes install using kubeadm will take care setting up cgroup driver.and will set to systemd 
+
+Now we will install run time containerd and configure this run time to use cgroup driver as systemd 
+
+------------------------------------------------Container run time installation----------------------------------------------------
+10. sudo apt update
+11. sudo apt install -y containerd
+12. sudo mkdir -p /etc/containerd
+13. containerd config default | sed 's/SystemdCgroup = false/SystemdCgroup = true/' | sudo tee /etc/containerd/config.toml
+14. cat /etc/containerd/config.toml |grep -i SystemdCgroup -B 20
+15. sudo systemctl restart containerd.service
+
+------------------------------------Installing kuebadm, kubectl, kubelet---------------------------------------------------------
+
+16. sudo apt-get update
+17. sudo apt-get install -y apt-transport-https ca-certificates curl gpg
+18. sudo mkdir -p -m 755 /etc/apt/keyrings
+19. curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+20. echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+21 sudo apt-get update
+22 sudo apt-get install -y kubelet kubeadm kubectl
+23 sudo apt-mark hold kubelet kubeadm kubectl
+24 sudo systemctl enable --now kubelet
+
+------------------------------- Creating cluster using kubeadm and adding network addon ---------------------------------------------------
+Run these commands only on master node. Here is it important to provide "pod-network-cidr" argument otherwise cluster will be created but when it comes to configure network addon like flannel we will face issue as flannel would not get to know which subnet need to use. 
+
+25. kubeadm init    --pod-network-cidr=10.244.0.0/16
+After successful initialization, Come out from root user and run below commands. 
+
+26.mkdir -p $HOME/.kube
+27.sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+28.sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+we will get output like : 
+You should now deploy a pod network to the cluster.
+Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
+Then you can join any number of worker nodes by running the following on each as root:
+
+kubeadm join 172.31.38.35:6443 --token y0u9tf.vsrgg8t123met68x \
+        --discovery-token-ca-cert-hash sha256:71d6417016698383b7f813da714c1aca07a694ad77aab38ed11a1e08dc3a0d17 
+
+Lets follow the instruction 
+
+at this point if we run(with non root user) "kubectl get nodes" We will see nodes are not ready because we have not configured networking. Lets configure network addon flannel on master nodes. 
+
+29. kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml. This command by default uses 10.244.0.0/16  pod-network-cidr if we want custom cidr block we have first download this file and and edit also we need re-initialize cluster with updated pod-cidr. 
+Remember all kubectl command need to be run with non root user
+30. Verfy cluster set-up by running 
+
+kubectl get nodes and kubectl get pods -A
+
+Now lets configure worker node. Login to worker node and run below command with root user.
+31. kubeadm join 172.31.38.35:6443 --token y0u9tf.vsrgg8t123met68x \
+        --discovery-token-ca-cert-hash sha256:71d6417016698383b7f813da714c1aca07a694ad77aab38ed11a1e08dc3a0d17
+
+32. Verify if the node is being added and recognized by running "kubectl get nodes" on controlplan node. 
+
+out put should be 
+
+ubuntu@master:~$ kubectl get nodes 
+NAME     STATUS   ROLES           AGE   VERSION
+master   Ready    control-plane   48m   v1.31.7
+worker   Ready    <none>          40s   v1.31.7
+
+33. Verify if the new pods are created 
+
+kubectl run myapp --image=nginx
+
+34. Restart both ec2 instances and check if configuration is persistent. 
+
+------------------------------------------Lets create alias of kubectl "k"-------------------------------------------------
+1. Get default shell running printenv
+2. echo "alias k='kubectl'" >> ~/.bashrc
+3. reload shell : source ~/.bashrc
+4. Test
+
+------------------------------------Enable kubectl command auto completion----------------------------------------------
+1.sudo apt update
+2.sudo apt install bash-completion
+3.echo "source <(kubectl completion bash)" >> ~/.bashrc
+4.echo "alias k=kubectl" >> ~/.bashrc
+5.echo "complete -F __start_kubectl k" >> ~/.bashrc
+6.source ~/.bashrc
+
+  
+
+ 
