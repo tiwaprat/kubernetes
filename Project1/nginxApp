@@ -1,1 +1,28 @@
-In this project we will use previously created cluster (kubeadm_cluster_setup.txt) and deploy a simple nginx image and access it using clusterip
+In this project we will use previously created cluster (kubeadm_cluster_setup.txt) and deploy a simple nginx image and access it using clusterip. 
+Steps: 
+1. setup sg for master and worker node so that both the nodes are pingable from each other. 
+2. run : kubectl run mypod --image nginx 
+3. incase this pod runs on workernode. try to access curl http://<pod ip> from worker node it should be accessible using cn0 interface 
+   But this same pod (on worker node) will not be accessible from masternode not even pingable as this pod ip on worker node is only accessible through flannel.1 ineterface 
+   from master that to from a pod on master not from host it self.
+
+[ Explaination: this is an example
+
+   Pods are connected to the cni0 bridge.
+   The flannel.1 overlay interface is available inside the network namespace used by Pods.
+   So when a Pod on master node tries to reach 10.244.1.3, it:
+   Uses cni0 → flannel.1 → encapsulates packet → sends to worker node → Flannel decapsulates → delivers to Pod.
+
+  That’s why inter-Pod communication works, but host-to-Pod across nodes fails unless routed correctly.
+   [ Master Host (172.31.82.239) ]          [ Worker Host (172.31.83.12) ]
+           |                                         |
+        enX0                                     enX0
+           |                                         |
+       [flannel.1]                              [flannel.1]
+           |                                         |
+        cni0                                     cni0
+           |                                         |
+   Pod: 10.244.0.2                         Pod: 10.244.1.3
+  Master host itself can’t talk to 10.244.1.3 because its traffic doesn't go through flannel.1.
+  Pod on master (10.244.0.x) can.] 
+
