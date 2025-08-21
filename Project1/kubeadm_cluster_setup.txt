@@ -38,7 +38,7 @@ cgroup drivers: control groups are used to constrain resources that are allocate
 
 There are 2 cgroup drivers 
 cgroupfs 
-system 
+systemd
 
 and both "container runtime" and kubelet actually talks to cgroup drivers for resource allocation for pods and containers and both are required to use same driver.
 
