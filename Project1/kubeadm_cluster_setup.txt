@@ -134,6 +134,10 @@ kubectl run myapp --image=nginx
 5.echo "complete -F __start_kubectl k" >> ~/.bashrc
 6.source ~/.bashrc
 
+------------------------------------------Change the stiatic name of machine----------------------------
+EX: sudo hostnamectl hostname master
+[Logout and login again to see changes]
+
   
 
  
