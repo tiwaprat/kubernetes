@@ -1,4 +1,4 @@
-In this project we will use previously created cluster (kubeadm_cluster_setup.txt) and deploy a simple nginx image and access it using nodeport. 
+In this project we will use previously created cluster (kubeadm_cluster_setup.txt) and deploy a simple nginx image and access it using NodePort. 
 Steps: 
 1. setup sg for master and worker node so that both the nodes are pingable from each other. 
 2. run : kubectl run mypod --image nginx 
