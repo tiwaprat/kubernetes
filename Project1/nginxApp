@@ -25,4 +25,15 @@ Steps:
    Pod: 10.244.0.2                         Pod: 10.244.1.3
   Master host itself can’t talk to 10.244.1.3 because its traffic doesn't go through flannel.1.
   Pod on master (10.244.0.x) can.] 
+4. Open all required ports in SG of Master and worker nodes 
+5. On master nodes open 8472(for flannel) , 6443(api server), 10250 (for kubelet) and on worker open 10250, 30000-32767(nodeport). 8472(flannel cni). 
+6. Check SG settings , open port using ss on nodes and ip route on each nodes. If we want master to pod(on worker node) communication
+   we need to have routing for overlay network on flannel.1 interface. If we don't have not a big issue we just can access pod from node . we Can still access pod from pods
+   provided pods do have routing in their own routing table set up by flannel. 
+7. Create servive mypod-svc and use selctor to connect to mypod. 
+8. Now use public ip of worker node and high port of service to access application from outside the cluster.
+.
+
+
+NOTE : Detailed project is in k8s_pro (private repo)
 
