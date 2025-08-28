@@ -57,7 +57,8 @@ Now we will install run time containerd and configure this run time to use cgrou
 12. sudo mkdir -p /etc/containerd
 13. containerd config default | sed 's/SystemdCgroup = false/SystemdCgroup = true/' | sudo tee /etc/containerd/config.toml
 14. cat /etc/containerd/config.toml |grep -i SystemdCgroup -B 20
-15. sudo systemctl restart containerd.service
+15. sudo systemctl restart containerd.service   
+    sudo systemctl enable containerd.service
 
 ------------------------------------Installing kuebadm, kubectl, kubelet---------------------------------------------------------
 
