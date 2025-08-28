@@ -78,7 +78,7 @@ Run these commands only on master node. Here is it important to provide "pod-net
 25. sudo kubeadm init    --pod-network-cidr=10.244.0.0/16
 After successful initialization, Come out from root user and run below commands. 
 
-26.mkdir -p $HOME/.kube
+26.sudo mkdir -p $HOME/.kube
 27.sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 28.sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
