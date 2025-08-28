@@ -19,8 +19,8 @@ Below commands run on both machine
 
 Network setting required for network add ons like flannel: run
 
-5.modprobe br_netfilter
-6. Run: ls /proc/sys/net/bridge  [Verify bridge-nf-call-iptables should be there in list]
+5. sudo modprobe br_netfilter
+6. sudo ls /proc/sys/net/bridge  [Verify bridge-nf-call-iptables should be there in list]
 7. sudo tee /etc/modules-load.d/k8s.conf <<EOF
 br_netfilter
 EOF
