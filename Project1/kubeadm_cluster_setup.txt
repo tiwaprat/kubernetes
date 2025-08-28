@@ -75,7 +75,7 @@ Now we will install run time containerd and configure this run time to use cgrou
 ------------------------------- Creating cluster using kubeadm and adding network addon ---------------------------------------------------
 Run these commands only on master node. Here is it important to provide "pod-network-cidr" argument otherwise cluster will be created but when it comes to configure network addon like flannel we will face issue as flannel would not get to know which subnet need to use. 
 
-25. kubeadm init    --pod-network-cidr=10.244.0.0/16
+25. sudo kubeadm init    --pod-network-cidr=10.244.0.0/16
 After successful initialization, Come out from root user and run below commands. 
 
 26.mkdir -p $HOME/.kube
