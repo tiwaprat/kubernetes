@@ -102,7 +102,7 @@ Remember all kubectl command need to be run with non root user
 
 kubectl get nodes and kubectl get pods -A
 
-Now lets configure worker node. Login to worker node and run below command with root user.
+Now lets configure worker node. Login to worker node and run below command with "ROOT USER".
 31. kubeadm join 172.31.38.35:6443 --token y0u9tf.vsrgg8t123met68x \
         --discovery-token-ca-cert-hash sha256:71d6417016698383b7f813da714c1aca07a694ad77aab38ed11a1e08dc3a0d17
 
